@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: crm-frontend
+    env: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://crm-backend.onrender.com
+    region: us-east-1
+    plan: starter
+
+  - type: web
+    name: crm-backend
+    env: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: crm-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: crm-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+    region: us-east-1
+    plan: starter
+
+  - type: pserv
+    name: crm-db
+    databaseName: crm_db
+    plan: starter
+    region: us-east-1
+
+  - type: redis
+    name: crm-redis
+    plan: starter
+    region: us-east-1
+
+databases:
+  - name: crm-db
+    databaseName: crm_db
+    plan: starter
+
+services:
+  - type: redis
+    name: crm-redis
+    plan: starter
